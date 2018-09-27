@@ -1,0 +1,8 @@
+---
+- name: main playbook for installing web server and configure it ( using roles/ )
+  hosts: all
+  become: true
+  
+
+  roles: 
+  - apache

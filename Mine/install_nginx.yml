@@ -1,0 +1,27 @@
+---
+- name: install nginx.
+  hosts: all
+  become: true
+  tasks: 
+    - name: enable nginx repo
+      yum_repository:
+        name: nginx
+        description: NGINX YUM repo
+        file: nginx_repo
+        baseurl: http://nginx.org/packages/mainline/rhel/7/$basearch/
+        gpgcheck: no
+      register: nginx_repo_enabled
+
+    - name: ensure nginx is installed 
+      yum: 
+        name: nginx
+        state: latest
+      register: nginx_installed
+      when: nginx_repo_enabled
+
+    - name: ensure nginx is running and enabled 
+      service: 
+        name: nginx
+        state: started
+        enabled: true
+      when: nginx_installed

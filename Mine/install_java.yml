@@ -1,0 +1,30 @@
+---
+- name: install java
+  hosts: all
+  become: true
+  vars: 
+    java_package: 
+      - java-1.6.0-openjdk*
+      - java*
+  tasks: 
+    - name: ensure java is installed 
+      yum: 
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ java_package }}"
+      register: java_installed
+    - name: Set JAVA_HOME if configured.
+      copy:
+        content: :"export JAVA_HOME={{ java_home }}\n"
+        dest: /etc/profile.d/java_home.sh
+        mode: 0644
+      when: java_installed
+
+    - name: check java version
+      command: java -version
+      changed_when: false
+      register: javaversion
+
+    - debug: var=javaversion
+
+      

@@ -1,0 +1,55 @@
+---
+- name: installing apache web server.
+  hosts: all
+  become: true
+  vars: 
+    apache_packages:
+      - httpd
+      - httpd-devel
+      - mod_ssl
+      - openssh
+    satellite_fqdn: ""
+
+  tasks: 
+    - name: Enable Repositories
+      shell: subscription-manager repos --enable=rhel-7-server-rpms
+    - name: refresh repos
+      shell: yum replist
+
+    - name: ensure apache is installed.
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ apache_packages }}"
+      register: apache_installed
+    - name: ensure Apache is enabled and running.
+      service: 
+        name: httpd
+        state: running 
+        enabled: true
+      register: apache_installed_running
+      when: apache_installed
+    - name: making web page index
+      copy:
+        content: "{{ ansible_fqdn }} ({{ ansible_default_ipv4.address }}) is managed by Ansible."
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart_apache
+      when: apache_installed_running
+
+  handlers: 
+    - name: restart_apache
+      service: 
+        name: httpd
+        state: restarted
+- name: testing if apache works on vm.
+  hosts: all
+  become: false
+  tasks:
+    - name: connecting to the web page
+      uri: 
+        url: "http://{{ ansible_fqdn }}"
+        status_code: 200
+        delegate_to: localhost

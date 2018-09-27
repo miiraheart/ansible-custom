@@ -1,0 +1,26 @@
+---
+- name: install postgresql
+  hosts: all
+  become: true
+  vars: 
+    postgresql_packages: 
+      - postgresql10-server 
+      - postgresql10  
+  tasks: 
+    - name: add repo
+      shell: rpm -ivh https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-redhat10-10-1.noarch.rpm
+      ignore_errors: true
+    - name: install postgresql
+      yum: 
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ postgresql_packages }}"
+    - name: Initializing postgresql database
+      shell: /usr/pgsql-10/bin/postgresql-10-setup initdb
+      async: 300
+      poll: 45
+    - name: ensure postgresql is running and enabled 
+      service: 
+        name: postgresql-10
+        state: latest
+        enabled: true

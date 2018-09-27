@@ -1,0 +1,36 @@
+---
+- name: install php
+  hosts: all
+  become: true
+  vars: 
+    php_packages:
+      - php
+      - php-cli
+      - php-common
+      - php-devel
+      - php-fpm
+      - php-gd
+      - php-imap
+      - php-ldap
+      - php-mbstring
+      - php-opcache
+      - php-pdo
+      - php-pear
+      - php-pecl-apcu
+      - php-xml
+      - php-xmlrpc
+
+  tasks: 
+    - name: ensure php is installed 
+      yum: 
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ php_packages }}"
+      register: php_installed
+      notify: restart_apache
+  handlers: 
+    - name: restart_apache
+      service: 
+        name: httpd
+        state: restarted
+

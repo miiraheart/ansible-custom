@@ -1,0 +1,21 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: geerlingguy
+  modified by: Khaoula Ben Sghaier
+  description: Apache 2.x for Linux.
+  company: "Midwestern Mac, LLC"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.4
+  platforms:
+    - name: EL
+      versions:
+        - all
+  galaxy_tags:
+    - web
+    - apache
+    - webserver
+    - html
+
+allow_duplicates: yes

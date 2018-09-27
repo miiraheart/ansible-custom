@@ -1,0 +1,4 @@
+---
+java_home: ""
+ansible_distribution: "RedHat"
+ansible_os_family: "RedHat"

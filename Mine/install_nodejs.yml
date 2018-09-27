@@ -1,0 +1,38 @@
+---
+- name: install nodejs
+  hosts: all
+  become: true
+  vars: 
+    needed_package: nodejs
+  tasks: 
+    - name: ensure repos is enabled
+      shell: yum install -y gcc-c++ make
+    - name: adding repos
+      shell: curl -sL https://rpm.nodesource.com/setup_10.x | sudo -E bash -
+    - name: install nodejs 
+      yum: 
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ nodejs_package }}"
+      register: nodejs_installed
+    - name: check java version
+      command: nodejs -v
+      changed_when: false
+      register: nodejsversion
+    - name: testing nodejs
+      blockinfile:
+        path: /var/www/html/demo_server.js
+        block: |
+          var http = require('http');
+          http.createServer(function (req, res) {
+            res.writeHead(200, {'Content-Type': 'text/plain'});
+            res.end('Welcome Node.js');
+          }).listen(3001, "127.0.0.1");
+          console.log('Server running at http://127.0.0.1:3001/');
+      register: code_added
+    - name: test file
+      shell: node --debug demo_server.js
+      changed_when: false
+      register: nodejstest
+
+    - debug: var=nodejstest

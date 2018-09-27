@@ -1,0 +1,19 @@
+---
+- name: install php-mysql
+  hosts: all
+  become: true
+  vars: 
+    php_mysql_package: php-mysql
+  tasks: 
+    - name: ensure php-mysql is installed 
+      yum: 
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ php_mysql_package }}"
+      register: php_mysql_installed
+      notify: restart_apache
+  handlers: 
+    - name: restart_apache
+      service: 
+        name: httpd
+        state: restarted

@@ -1,0 +1,76 @@
+---
+- hosts: all
+  gather_facts: no 
+  tasks:
+   - name: Enable Repositories
+     shell: subscription-manager repos --enable=rhel-7-server-rpms
+   - name: refresh repos
+     shell: yum replist
+   - name: add mariadb repo
+     yum_repository:
+       name: MariaDB
+       description: Official MariaDB repository
+       baseurl: http://yum.mariadb.org/10.1/rhel7-amd64
+       gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+       gpgcheck: 1
+   - name: ensure mariadb is installed and at the latest version 
+     ignore_errors: yes
+     yum:
+       name: "{{ item }}"
+       state: present
+     with_items:
+       - MariaDB-server
+       - MariaDB-client
+   - name: ensure mariadb is running (and enable it at boot)
+     service:
+        name: mariadb
+        state: started
+        enabled: yes
+   - name: ensure mysql-python is installed and at the latest version
+     yum:
+       name: MySQL-python
+       state: latest
+   - name: Check if root password is set
+     shell: >
+       mysqladmin -u root status
+     changed_when: false
+     failed_when: false
+     register: root_pwd_check
+   - name: Set MariaDB root password for the first time
+     mysql_user:
+        name: root
+        password: "{{ root_passwd }}"
+        host_all: yes
+        state: present
+     when: root_pwd_check.rc == 0
+   - name: Remove the test database
+     mysql_db:
+       name: test
+       login_user: root
+       login_password: "{{ root_passwd }}"
+       state: absent
+   - name: Create user defined databases
+     mysql_db:
+       name: "{{ item }}"
+       login_user: root
+       login_password: "{{ root_passwd }}"
+       state: present
+     with_items: "{{ mariadb_databases.split() }}"
+     register: db_creation
+   - name: Remove anonymous users
+     mysql_user:
+       name: ''
+       host_all: yes
+       login_user: root
+       login_password: "{{ root_passwd }}"
+       state: absent
+   - name: Create the users
+     mysql_user:
+       name: "{{ item }}"
+       password: "{{ user_passwd }}"
+       host: 'localhost'
+       login_user: root
+       login_password: "{{ root_passwd }}"
+       state: present
+     with_items: "{{ mariadb_users.split() }}"
+
